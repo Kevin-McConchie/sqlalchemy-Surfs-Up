@@ -39,8 +39,8 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start/end"
+        f"/api/v1.0/<start>/<br/>"
+        f"/api/v1.0/<start>/<end>"
     )
 
 
@@ -96,20 +96,59 @@ def tobs():
     return jsonify(tobs_list =tobs_list )
 
 
-@app.route("/api/v1.0/start")
+# @app.route("/api/v1.0/<start>/<end>")
+# def start():
+    
+#     sel = [func.min(Measurement.tobs),
+#     func.max(Measurement.tobs),
+#     func.avg(Measurement.tobs)]
+    
+#     # create start date variable
+#     # start_dt= dt.datetime.strftime('%Y-%m-%d')
+   
+#     if not end:
+#     # start = dt.datetime.strptime(start, "%Y%m%d")
+#     # set criteria for query
+
+#     # select data for query
+#         data4 = session.query(*sel).\
+#         filter(Measurement.date >= start).all()
+    
+#     # create dictionary for query
+#     stats=[]
+#     for min, max, avg in data4:
+#         stats_dict={}
+#         stats_dict['TMIN'] = min
+#         stats_dict['TMAX'] = max
+#         stats_dict['TAVG'] = avg
+#         stats.append(stats_dict)
+        
+        
+#     session.close()
+
+#     return jsonify(stats)
+
+
+@app.route("/api/v1.0/<start>/<end>")
 def start():
     
+    sel = [func.min(Measurement.tobs),
+    func.max(Measurement.tobs),
+    func.avg(Measurement.tobs)]
+    
     # create start date variable
-    # start_dt= dt.datetime.strftime('%Y-%m-%d')
-    start = dt.datetime.strptime(start, "%Y%m%d")
+    start= dt.datetime.strptime('%Y-%m-%d')
+    end= dt.datetime.strptime('%Y-%m-%d')
+
     # set criteria for query
     sel = [func.min(Measurement.tobs),
     func.max(Measurement.tobs),
     func.avg(Measurement.tobs)]
     
+
     # select data for query
     data4 = session.query(*sel).\
-        filter(Measurement.date >= start).all()
+        filter(Measurement.date >= start).filter(Measurement.date <= end).all()
     
     # create dictionary for query
     stats=[]
@@ -124,6 +163,7 @@ def start():
     session.close()
 
     return jsonify(stats)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
