@@ -100,8 +100,8 @@ def tobs():
 def start():
     
     # create start date variable
-    start_dt= dt.datetime.strptime('%Y-%m-%d')
-
+    # start_dt= dt.datetime.strftime('%Y-%m-%d')
+    start = dt.datetime.strptime(start, "%Y%m%d")
     # set criteria for query
     sel = [func.min(Measurement.tobs),
     func.max(Measurement.tobs),
@@ -109,7 +109,7 @@ def start():
     
     # select data for query
     data4 = session.query(*sel).\
-        filter(Measurement.date >= start_dt).all()
+        filter(Measurement.date >= start).all()
     
     # create dictionary for query
     stats=[]
@@ -123,7 +123,7 @@ def start():
         
     session.close()
 
-    return jsonify(stats=stats)
+    return jsonify(stats)
 
 if __name__ == '__main__':
     app.run(debug=True)
