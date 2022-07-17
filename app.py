@@ -1,5 +1,5 @@
 import numpy as np
-
+import pandas as pd
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
@@ -19,8 +19,8 @@ Base = automap_base()
 Base.prepare(engine, reflect=True)
 
 # Save reference to the table
-measurement= Base.classes.measurement
-station= Base.classes.station
+Measurement= Base.classes.measurement
+Station= Base.classes.station
 
  # Create our session (link) from Python to the DB
 session = Session(bind=engine)
@@ -36,11 +36,11 @@ app = Flask(__name__)
 def welcome():
     """List all available api routes."""
     return (
-        f"Date and preciptation information: /api/v1.0/precipitation<br/>"
-        f"Station id and name: /api/v1.0/stations<br/>"
-        f"Dates and temperature obs for most active station from last 12 months: /api/v1.0/tobs<br/>"
-        f"Min. Max. and Avg. tempratures for given start date: /api/v1.0/yyyy-mm-dd<br/>"
-        f"Min. Max. and Avg. tempratures for given start and end date:/api/v1.0/yyyy-mm-dd/yyyy-mm-dd"
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start/end"
     )
 
 
@@ -48,7 +48,7 @@ def welcome():
 def prcp():
 
     # Query precipitation values
-    data = session.query(measurement.date, measurement.prcp)
+    data = session.query(Measurement.date, Measurement.prcp)
 
     # Create dictionary
     prcp={date:prcp for date, prcp in data}
@@ -61,7 +61,7 @@ def prcp():
 def stationid():
 
     # Query station id's values
-    data2 = session.query(station.station, station.name)
+    data2 = session.query(Station.station, Station.name)
     
     # Create dictionary
     stations={station:name for station, name in data2}
@@ -77,18 +77,18 @@ def tobs():
     limit_date = dt.date(2017, 8, 23)- dt.timedelta(days=365)
 
     # create details for query
-    sel = [measurement.station,
-    func.count(measurement.tobs)]
+    sel = [Measurement.station,
+    func.count(Measurement.tobs)]
 
     # set criteria for most active station
     most_active = session.query(*sel).\
-            group_by(measurement.station).\
-            order_by(func.count(measurement.id).desc()).first()
+            group_by(Measurement.station).\
+            order_by(func.count(Measurement.id).desc()).first()
             
     # select information for most active station
-    data3 = session.query(measurement.tobs).\
-    filter(measurement.station == most_active[0]).\
-    filter(measurement.date>=limit_date).all()
+    data3 = session.query(Measurement.tobs).\
+    filter(Measurement.station == most_active[0]).\
+    filter(Measurement.date>=limit_date).all()
 
     session.close()
 
@@ -97,20 +97,19 @@ def tobs():
 
 
 @app.route("/api/v1.0/start")
-def start(start_dt):
+def start():
     
     # create start date variable
     start_dt= dt.datetime.strptime('%Y-%m-%d')
 
     # set criteria for query
-    sel = [measurement.date,measurement.tobs,
-    func.min(measurement.tobs),
-    func.max(measurement.tobs),
-    func.avg(measurement.tobs)]
+    sel = [func.min(Measurement.tobs),
+    func.max(Measurement.tobs),
+    func.avg(Measurement.tobs)]
     
     # select data for query
     data4 = session.query(*sel).\
-        filter(measurement.date >= start_dt).all()
+        filter(Measurement.date >= start_dt).all()
     
     # create dictionary for query
     stats=[]
@@ -124,7 +123,7 @@ def start(start_dt):
         
     session.close()
 
-    return jsonify(stats)
+    return jsonify(stats=stats)
 
 if __name__ == '__main__':
     app.run(debug=True)
