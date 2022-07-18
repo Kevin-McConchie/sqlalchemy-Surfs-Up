@@ -53,6 +53,7 @@ def prcp():
 
     # Create dictionary
     prcp={date:prcp for date, prcp in data}
+    
     session.close()
 
     return jsonify(prcp)
@@ -66,6 +67,7 @@ def stationid():
     
     # Create list
     stations={station:name for station, name in data2}
+    
     session.close()
 
     return jsonify(stations)
@@ -94,7 +96,9 @@ def tobs():
     session.close()
 
     tobs_list = list(np.ravel(data3))
+    
     return jsonify(tobs_list =tobs_list)
+
 
 @app.route("/api/v1.0/<start>")
 @app.route("/api/v1.0/<start>/<end>")
