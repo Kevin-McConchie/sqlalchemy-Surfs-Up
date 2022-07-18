@@ -1,3 +1,4 @@
+from pstats import Stats
 import numpy as np
 import pandas as pd
 import sqlalchemy
@@ -63,7 +64,7 @@ def stationid():
     # Query station id's values
     data2 = session.query(Station.station, Station.name)
     
-    # Create dictionary
+    # Create list
     stations={station:name for station, name in data2}
     session.close()
 
@@ -93,77 +94,49 @@ def tobs():
     session.close()
 
     tobs_list = list(np.ravel(data3))
-    return jsonify(tobs_list =tobs_list )
+    return jsonify(tobs_list =tobs_list)
 
-
-# @app.route("/api/v1.0/<start>/<end>")
-# def start():
-    
-#     sel = [func.min(Measurement.tobs),
-#     func.max(Measurement.tobs),
-#     func.avg(Measurement.tobs)]
-    
-#     # create start date variable
-#     # start_dt= dt.datetime.strftime('%Y-%m-%d')
-   
-#     if not end:
-#     # start = dt.datetime.strptime(start, "%Y%m%d")
-#     # set criteria for query
-
-#     # select data for query
-#         data4 = session.query(*sel).\
-#         filter(Measurement.date >= start).all()
-    
-#     # create dictionary for query
-#     stats=[]
-#     for min, max, avg in data4:
-#         stats_dict={}
-#         stats_dict['TMIN'] = min
-#         stats_dict['TMAX'] = max
-#         stats_dict['TAVG'] = avg
-#         stats.append(stats_dict)
-        
-        
-#     session.close()
-
-#     return jsonify(stats)
-
-
+@app.route("/api/v1.0/<start>")
 @app.route("/api/v1.0/<start>/<end>")
-def start():
+def start(start=None, end=None):
     
-    sel = [func.min(Measurement.tobs),
-    func.max(Measurement.tobs),
-    func.avg(Measurement.tobs)]
-    
-    # create start date variable
-    start= dt.datetime.strptime('%Y-%m-%d')
-    end= dt.datetime.strptime('%Y-%m-%d')
-
     # set criteria for query
     sel = [func.min(Measurement.tobs),
-    func.max(Measurement.tobs),
-    func.avg(Measurement.tobs)]
+        func.max(Measurement.tobs),
+        func.avg(Measurement.tobs)]
     
+    # set criteria no end date
+    if not end: 
+        start= dt.datetime.strptime(start,'%Y-%m-%d')
 
     # select data for query
-    data4 = session.query(*sel).\
-        filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+        temps = session.query(*sel).\
+        filter(Measurement.date >= start).all()
+        
+        session.close()
+        
+        stats = list(np.ravel(temps))
+        
+        return jsonify(stats)
+        
+    # set criteria for for start and end dates
+    else:
+        start= dt.datetime.strptime(start,'%Y-%m-%d')
+        end= dt.datetime.strptime(end,'%Y-%m-%d')
+        
+        # select data for query
+        temps = session.query(*sel).\
+        filter(Measurement.date >= start).\
+            filter(Measurement.date <= end).all()
+
+        session.close()
+        
+        stats = list(np.ravel(temps)) 
+        
+        return jsonify(stats)
     
-    # create dictionary for query
-    stats=[]
-    for min, max, avg in data4:
-        stats_dict={}
-        stats_dict['TMIN'] = min
-        stats_dict['TMAX'] = max
-        stats_dict['TAVG'] = avg
-        stats.append(stats_dict)
         
-        
-    session.close()
-
-    return jsonify(stats)
-
-
 if __name__ == '__main__':
     app.run(debug=True)
+
+    
